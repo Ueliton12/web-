@@ -4,16 +4,18 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// Configurar CORS para o frontend específico
+// Configurar CORS para o frontend correto
 app.use(cors({
-  origin: 'https://web-frontend.onrender.com'
+  origin: 'https://web-frontend-p17n.onrender.com' // Corrigido para o domínio atual do frontend
 }));
 app.use(express.json());
 
-// Conexão com MongoDB com tratamento de erro
-mongoose.connect(process.env.MONGODB_URI)
+// Conexão com MongoDB com opções modernas
+mongoose.connect(process.env.MONGODB_URI, {
+  retryWrites: true,
+  maxPoolSize: 10 // Ajuste conforme necessário
+})
   .then(() => console.log('Mongoose conectado ao MongoDB'))
   .catch((err) => console.error('Erro de conexão com MongoDB:', err.message));
 
@@ -37,7 +39,7 @@ const productSchema = new mongoose.Schema({
   image: { type: String, required: true },
   name: { type: String, required: true },
   price: { type: Number, required: true },
-  expiry: { type: String, required: true }
+  expiry: { type: Date, required: true } // Mudado para Date para facilitar comparações
 });
 
 const User = mongoose.model('User', userSchema);
@@ -85,14 +87,15 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { username, password, role } = req.body;
     if (!username || !password) return res.status(400).json({ message: 'Username e senha são obrigatórios' });
-    const user = await User.findOne({ username, role });
+    const user = await User.findOne({ username });
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ message: 'Credenciais inválidas' });
     }
     if (user.banned) return res.status(403).json({ message: 'Usuário banido' });
     if (user.suspended) return res.status(403).json({ message: 'Usuário suspenso' });
+    if (role && user.role !== role) return res.status(401).json({ message: 'Role inválida' }); // Validação de role
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token, user, role });
+    res.json({ token, user, role: user.role });
   } catch (err) {
     console.error('Erro no login:', err.message);
     res.status(500).json({ message: 'Erro ao fazer login' });
@@ -214,7 +217,7 @@ app.post('/api/products', authMiddleware, roleMiddleware('admin'), async (req, r
     if (!image || !name || price < 0 || !expiry) {
       return res.status(400).json({ message: 'Dados do produto inválidos' });
     }
-    const product = new Product({ image, name, price, expiry });
+    const product = new Product({ image, name, price, expiry: new Date(expiry) }); // Converter para Date
     await product.save();
     res.json(product);
   } catch (err) {
@@ -238,6 +241,8 @@ async function initializeAdmin() {
 }
 initializeAdmin();
 
+// Iniciar servidor
+const PORT = process.env.PORT; // Remover fallback para 3000
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
