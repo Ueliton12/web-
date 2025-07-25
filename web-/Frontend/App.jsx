@@ -26,14 +26,14 @@ const App = () => {
     else if (role === 'moderator') setCurrentPage('moderator-login');
 
     // Carregar produtos
-    axios.get('/api/products')
+    axios.get(`${process.env.REACT_APP_API_URL}/api/products`)
       .then(res => setProducts(res.data))
-      .catch(err => console.error(err));
+      .catch(err => console.error('Erro ao carregar produtos:', err));
 
     // Verificar autenticação
     const token = localStorage.getItem('token');
     if (token) {
-      axios.get('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+      axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
         .then(res => {
           const { role, user } = res.data;
           setIsAuthenticated(true);
@@ -49,7 +49,10 @@ const App = () => {
             setCurrentPage('admin-dashboard');
           }
         })
-        .catch(() => localStorage.removeItem('token'));
+        .catch(err => {
+          console.error('Erro ao verificar autenticação:', err);
+          localStorage.removeItem('token');
+        });
     }
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -58,7 +61,7 @@ const App = () => {
   const handleUserLogin = async (username, password) => {
     setFadeOut(true);
     try {
-      const res = await axios.post('/api/auth/login', { username, password, role: 'user' });
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/login`, { username, password, role: 'user' });
       localStorage.setItem('token', res.data.token);
       setIsAuthenticated(true);
       setUser(res.data.user);
@@ -72,7 +75,7 @@ const App = () => {
   const handleUserRegister = async (username, password) => {
     setFadeOut(true);
     try {
-      await axios.post('/api/auth/register', { username, password });
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/register`, { username, password });
       await handleUserLogin(username, password);
     } catch (err) {
       alert(err.response?.data?.message || 'Erro ao registrar');
@@ -83,7 +86,7 @@ const App = () => {
   const handleAdminLogin = async (username, password) => {
     setFadeOut(true);
     try {
-      const res = await axios.post('/api/auth/login', { username, password, role: 'admin' });
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/login`, { username, password, role: 'admin' });
       localStorage.setItem('token', res.data.token);
       setIsAdmin(true);
       setCurrentPage('admin-dashboard');
@@ -96,7 +99,7 @@ const App = () => {
   const handleModeratorLogin = async (username, password) => {
     setFadeOut(true);
     try {
-      const res = await axios.post('/api/auth/login', { username, password, role: 'moderator' });
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/login`, { username, password, role: 'moderator' });
       localStorage.setItem('token', res.data.token);
       setIsModerator(true);
       setModerator(res.data.user);
@@ -110,7 +113,7 @@ const App = () => {
   // Funções Admin
   const addModerator = async (username, password) => {
     try {
-      await axios.post('/api/moderators', { username, password }, {
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/moderators`, { username, password }, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       alert('Moderador adicionado!');
@@ -122,7 +125,7 @@ const App = () => {
   const addProduct = async (image, name, price, expiry) => {
     try {
       const newProduct = { image, name, price, expiry };
-      const res = await axios.post('/api/products', newProduct, {
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/products`, newProduct, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       setProducts([...products, res.data]);
@@ -134,7 +137,7 @@ const App = () => {
 
   const toggleSuspendModerator = async (id) => {
     try {
-      await axios.put(`/api/moderators/${id}/suspend`, {}, {
+      await axios.put(`${process.env.REACT_APP_API_URL}/api/moderators/${id}/suspend`, {}, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       alert('Status do moderador atualizado!');
@@ -145,7 +148,7 @@ const App = () => {
 
   const toggleBanModerator = async (id) => {
     try {
-      await axios.put(`/api/moderators/${id}/ban`, {}, {
+      await axios.put(`${process.env.REACT_APP_API_URL}/api/moderators/${id}/ban`, {}, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       alert('Status do moderador atualizado!');
@@ -156,7 +159,7 @@ const App = () => {
 
   const toggleSuspendUser = async (id) => {
     try {
-      await axios.put(`/api/users/${id}/suspend`, {}, {
+      await axios.put(`${process.env.REACT_APP_API_URL}/api/users/${id}/suspend`, {}, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       alert('Status do usuário atualizado!');
@@ -167,7 +170,7 @@ const App = () => {
 
   const toggleBanUser = async (id) => {
     try {
-      await axios.put(`/api/users/${id}/ban`, {}, {
+      await axios.put(`${process.env.REACT_APP_API_URL}/api/users/${id}/ban`, {}, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       alert('Status do usuário atualizado!');
@@ -277,12 +280,12 @@ const App = () => {
     const [moderators, setModerators] = useState([]);
 
     useEffect(() => {
-      axios.get('/api/users', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+      axios.get(`${process.env.REACT_APP_API_URL}/api/users`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
         .then(res => setUsers(res.data))
-        .catch(err => console.error(err));
-      axios.get('/api/moderators', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+        .catch(err => console.error('Erro ao carregar usuários:', err));
+      axios.get(`${process.env.REACT_APP_API_URL}/api/moderators`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
         .then(res => setModerators(res.data))
-        .catch(err => console.error(err));
+        .catch(err => console.error('Erro ao carregar moderadores:', err));
     }, []);
 
     const filteredModerators = moderators.filter(m => m.username.toLowerCase().includes(searchQuery.toLowerCase()) || m.id.toString().includes(searchQuery));
@@ -483,9 +486,9 @@ const App = () => {
     const [users, setUsers] = useState([]);
 
     useEffect(() => {
-      axios.get('/api/users', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+      axios.get(`${process.env.REACT_APP_API_URL}/api/users`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
         .then(res => setUsers(res.data.filter(u => moderator?.linkedUsers.includes(u.id))))
-        .catch(err => console.error(err));
+        .catch(err => console.error('Erro ao carregar usuários:', err));
     }, []);
 
     const filteredUsers = users.filter(u => u.username.toLowerCase().includes(searchQuery.toLowerCase()) || u.id.toString().includes(searchQuery));
