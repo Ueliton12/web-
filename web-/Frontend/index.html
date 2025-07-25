@@ -8,10 +8,17 @@
   <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios@1.4.0/dist/axios.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/babel-standalone@7.22.5/babel.min.js"></script>
+  <!-- Remover babel-standalone para produção; compilar localmente ou usar build tool -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/babel-standalone@7.22.5/babel.min.js"></script> -->
+  <script>
+    // Definir variável de ambiente para o frontend (temporário até configurar no Render)
+    window.process = window.process || {};
+    window.process.env = window.process.env || {};
+    window.process.env.REACT_APP_API_URL = 'https://web-backend.onrender.com';
+  </script>
 </head>
 <body class="bg-gray-900">
   <div id="root"></div>
-  <script type="text/babel" src="App.jsx"></script>
+  <script type="text/javascript" src="App.jsx"></script>
 </body>
 </html>
