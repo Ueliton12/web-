@@ -10,7 +10,7 @@
     "express": "^4.19.2",
     "mongoose": "^8.5.2",
     "cors": "^2.8.5",
-    "jsonwebtoken": "^9.2.0",
+    "jsonwebtoken": "^9.0.2", // Corrigido para uma versão existente
     "bcryptjs": "^2.4.3"
   }
 }
